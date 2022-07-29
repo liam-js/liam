@@ -1,0 +1,57 @@
+{
+  "name": "@liam.js/liam",
+  "version": "1.0.0",
+  "description": "A simple React library capable of using JS(ON) Schema to build web page(application).",
+  "main": "src/index.js",
+  "devDependencies": {
+    "@babel/core": "^7.18.5",
+    "@babel/eslint-parser": "^7.18.2",
+    "cross-env": "^7.0.3",
+    "eslint": "^7.15.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-prettier": "^3.4.1",
+    "git-cz": "^4.9.0",
+    "jest": "^28.1.1",
+    "prettier": "^2.5.1",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.75.7",
+    "rollup-plugin-alias": "^2.2.0",
+    "rollup-plugin-babel": "^4.4.0",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-eslint": "^7.0.0",
+    "rollup-plugin-filesize": "^9.1.2",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-replace": "^2.2.0",
+    "rollup-plugin-serve": "^1.1.0",
+    "rollup-plugin-uglify": "^6.0.4"
+  },
+  "scripts": {
+    "clean": "rimraf dist",
+    "start": "npm run clean && cross-env NODE_ENV=development rollup -w -c rollup/dev.js",
+    "build": "npm run clean && cross-env NODE_ENV=production rollup -c rollup/prod.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:chancedai/liam.git"
+  },
+  "author": "Chang",
+  "license": "ISC",
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-redux": "^8.0.2",
+    "redux": "^4.2.0"
+  },
+  "keywords": [
+    "json",
+    "react",
+    "convertor"
+  ]
+}
