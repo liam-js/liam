@@ -1,16 +1,62 @@
 import * as React from 'react';
-import * as ReactDOM from 'react-dom';
 import * as Redux from 'redux';
 import * as ReactRedux from 'react-redux';
 import Event from './event';
 import buildInGetComponent from './getComponent';
 
+const reactCreateElement = React.createElement;
 const Liam = new Event();
 
 Object.assign(Liam, {
   React,
-  ReactDOM,
+  Redux,
+  ReactRedux,
 });
+
+if (window) {
+  window.Liam = Liam;
+  if (window.requirejs) {
+    Liam.requirejs = requirejs;
+    (function () {
+      var dMap = [
+        ['react', 'React'],
+        ['React', 'React'],
+        ['redux', 'Redux'],
+        ['react-redux', 'ReactRedux'],
+      ];
+      for (var i = 0; i < dMap.length; i++) {
+        const ele = dMap[i];
+        // 有些组件依赖全局变量，如 swiper
+        window[ele[0]] = Liam[ele[1]];
+        window.define(ele[0], function () {
+          return Liam[ele[1]];
+        });
+      }
+    })();
+
+    Liam.require =
+      window.liamRequire ||
+      requirejs.config({
+        context: 'liam',
+        waitSeconds: 0,
+        config: {
+          text: {
+            useXhr: function () {
+              return true;
+            },
+          },
+        },
+        map: {
+          '*': 'https://n.sinaimg.cn/utils/css.js',
+        },
+        paths: {
+          text: '//n.sinaimg.cn/utils/text',
+          'prop-types':
+            'https://e.sinaimg.cn/ssfe/unpkg/prop-types@15.8.1/prop-types',
+        },
+      });
+  }
+}
 
 const { Provider, connect } = ReactRedux;
 
@@ -123,6 +169,26 @@ const reduxManager = (function () {
 Object.assign(Liam, reduxManager);
 
 let cfg = {
+  render: (function () {
+    let render = function () {
+      console.error(
+        '还没有使用 Liam.config() 来配置 render 方法, arguments 为',
+        arguments
+      );
+    };
+    if (window.ReactDOM) {
+      render = function (schema, node) {
+        // 根元素创建
+        const RootElement = createElement(schema, true);
+        Object.assign(Liam, {
+          schema,
+          node,
+        });
+        window.ReactDOM.createRoot(node).render(RootElement);
+      };
+    }
+    return render;
+  })(),
   // 获取组件信息
   getComponentFns: [buildInGetComponent],
   // 组件映射表，用于简写 type
@@ -173,7 +239,7 @@ const getComponent = function (ctx) {
   const next = function () {
     count++;
     if (count < length) {
-      getComponentFns[count](ctx, next);
+      getComponentFns[count].apply(Liam, [ctx, next]);
     }
   };
   next();
@@ -202,6 +268,10 @@ const config = function (c) {
     // 四、
     if (typeof c.wrapText !== 'undefined') {
       cfg.wrapText = c.wrapText;
+    }
+    // 五
+    if (typeof c.render === 'function') {
+      cfg.render = c.render;
     }
   }
   return cfg;
@@ -267,11 +337,9 @@ function isReactComponent(component) {
   }
 }
 
-const e = React.createElement;
-
 // 函数组件，渲染属性（渲染 children） 都是一个方法，这个方法都它的 ast 信息，但转化结果却没有
 const convertResultToReactNode = function (fn, context) {
-  return function () {
+  return function C() {
     let props = arguments[0];
     let result = fn.apply(context, Array.prototype.slice.call(arguments));
     result = withAst(result, props);
@@ -320,10 +388,9 @@ const getRealSchema = function (schema, done) {
         });
       }
       // 给 props 补充 children 属性，否则可能渲染不出来
-      if(schema.children && schema.props && !schema.props.children){
+      if (schema.children && schema.props && !schema.props.children) {
         schema.props.children = schema.children;
       }
-      
     }
 
     done(schema, isAsync, schemaType, ast);
@@ -440,7 +507,7 @@ const getFallback = function (schema) {
     return createElement(schema.fallback);
   } else {
     return null;
-    // return e(
+    // return reactCreateElement(
     //   'div',
     //   {
     //     style: {
@@ -476,7 +543,7 @@ const getPosition = function (ast) {
 class FaultComponent extends React.PureComponent {
   render() {
     console.error('*Render Error', this.props);
-    return e(
+    return reactCreateElement(
       'div',
       {
         style: {
@@ -538,7 +605,7 @@ const schemaToElement = function (component, schema, wrapType, ast) {
     component = componentSchemaAdapt(component);
   }
 
-  const props = schema.props||{};
+  const props = schema.props || {};
 
   // schema 没有 node 类型，需要把 schema 转为 node
   // 通过 nodeProps 确定哪些属性需要转为 nodeProps
@@ -610,8 +677,19 @@ const schemaToElement = function (component, schema, wrapType, ast) {
       );
     }
   }
-  return e(component, extendProps(props, schema, ast), realChildren);
+  return reactCreateElement(
+    component,
+    extendProps(props, schema, ast),
+    realChildren
+  );
 };
+
+const lifeCycleProps = [
+  '__didMount',
+  '__didUpdate',
+  '__willUnmount',
+  '__didCatch',
+];
 
 function withContainer(WrappedComponent, schemaType) {
   const applyInContext = function (type, args, context) {
@@ -673,35 +751,47 @@ function withContainer(WrappedComponent, schemaType) {
 
     render() {
       const self = this;
+      const props = self.props;
+      const LiamElement = 'liam';
+      const wrappedComponentProps = {};
+
+      for (const key in props) {
+        if (Object.hasOwnProperty.call(props, key)) {
+          if (lifeCycleProps.indexOf(key) === -1) {
+            wrappedComponentProps[key] = props[key];
+          }
+        }
+      }
+
       const render = function () {
         const innerProps = {
           ref: self.innerRef,
         };
         if (self.state.__error) {
           // 你可以自定义降级后的 UI 并渲染
-          return e(FaultComponent, {
-            ...self.props,
+          return reactCreateElement(FaultComponent, {
+            ...wrappedComponentProps,
             ...self.state,
             ...innerProps,
           });
         }
         if (schemaType === 'element') {
-          return e(
-            'p__',
+          return reactCreateElement(
+            LiamElement,
             {
-              ...self.props,
+              ...wrappedComponentProps,
               ...innerProps,
             },
             WrappedComponent
           );
         } else {
-          return e(
+          return reactCreateElement(
             WrappedComponent,
             {
-              ...self.props,
+              ...wrappedComponentProps,
               ...innerProps,
             },
-            self.props.children
+            props.children
           );
         }
       };
@@ -717,20 +807,13 @@ function withContainer(WrappedComponent, schemaType) {
 const getWrapType = function (schema) {
   let wrapType = '';
   let keys = [];
-  const lifeCycleProps = [
-    '__didMount',
-    '__didUpdate',
-    '__willUnmount',
-    '__didCatch',
-  ];
-  if (!schema) {
+
+  if (!schema || (typeof schema.w !== 'undefined' && schema.w === false)) {
     return '';
   }
-  if (typeof schema === 'string') {
-    // 文字（字符串是否包裹），只能包裹生命周期
-    if (cfg.wrapText) {
-      return 'life';
-    }
+  if (typeof schema === 'string' && cfg.wrapText) {
+    // 文字（字符串是否包裹）
+    return '';
   }
 
   // 如果设置了生命周期的相关参数，则需要包裹生命周期的容器
@@ -776,6 +859,7 @@ const getWrappedComponent = function (
   }
 
   if (wrapType.indexOf('state') > -1) {
+    console.log(Component,'999');
     //props map目前为了触发更新； dispatch 不用 map
     Component = connect((states) => {
       let props = {};
@@ -788,6 +872,7 @@ const getWrappedComponent = function (
       });
       return props;
     })(Component);
+    console.log(Component,'aaa');
   }
 
   return Component;
@@ -926,7 +1011,7 @@ const getElement = function (config) {
           // 如果包裹类型不为空，则使用 getWrappedComponent 包裹
           if (wrapType) {
             setElement(
-              e(
+              reactCreateElement(
                 getWrappedComponent(
                   // 真实 schema
                   realSchema,
@@ -992,13 +1077,13 @@ const getElement = function (config) {
   );
 
   if (useLazy) {
-    element = e(
+    element = reactCreateElement(
       React.Suspense,
       {
         fallback: getFallback(originalSchema),
         // props,
       },
-      e(
+      reactCreateElement(
         React.lazy(function () {
           return new Promise((resolve) => {
             // 执行到这里是异步的，而获取到真实组件也是异步的
@@ -1050,7 +1135,7 @@ const createElement = function (schema, isRoot) {
 
   const providerWrap = (component) => {
     if (isRoot) {
-      return e(
+      return reactCreateElement(
         Provider,
         {
           store: Liam.store,
@@ -1080,16 +1165,6 @@ const createElement = function (schema, isRoot) {
   return result;
 };
 
-const render = function (schema, node) {
-  // 根元素创建
-  const RootElement = createElement(schema, true);
-  Object.assign(Liam, {
-    schema,
-    node,
-  });
-  ReactDOM.createRoot(node).render(RootElement);
-};
-
 const toJs = function (text, args, name) {
   if (typeof args === 'string') {
     name = args;
@@ -1102,7 +1177,6 @@ const toJs = function (text, args, name) {
   const defaultArgs = {
     Liam,
     React,
-    ReactDOM,
   };
   args = Object.assign({}, defaultArgs, args || {});
   const newFunctionArgs = [null];
@@ -1126,8 +1200,10 @@ const toJs = function (text, args, name) {
 
 Object.assign(Liam, {
   createElement,
-  render,
   toJs,
+  render: function(){
+    cfg.render.apply(this, Array.prototype.slice.call(arguments));
+  },
 });
 
 export default Liam;

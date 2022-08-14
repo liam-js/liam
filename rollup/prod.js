@@ -5,7 +5,7 @@ import { uglify } from 'rollup-plugin-uglify';
 import baseConfig from './base';
 import { name, version, author } from '../package.json';
 
-const pkgName = name.replace('@liam.js', '');
+const pkgName = name.replace('@liam-js/', '');
 
 // banner
 const banner =
@@ -20,6 +20,10 @@ const appIntro = fs.readFileSync('src/app-intro.js', {
 
 const appBanner = banner.replace('liam','liam-app')+`
 `+appIntro;
+
+const appOutro = fs.readFileSync('src/app-outro.js', {
+    encoding: 'utf-8',
+  });
 
 export default [
   // .js, .cjs.js, .esm.js
@@ -77,7 +81,8 @@ export default [
           id: pkgName,
         },
         name: 'Liam',
-        banner: appBanner
+        banner: appBanner,
+        footer: appOutro
       },
     ],
     plugins: [

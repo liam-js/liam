@@ -2,9 +2,13 @@ import fs from 'fs';
 import baseConfig from './base.js';
 import serve from 'rollup-plugin-serve';
 import { name } from '../package.json';
-const pkgName = name.replace('@liam.js', '');
+const pkgName = name.replace('@liam-js/', '');
 
 const appIntro = fs.readFileSync('src/app-intro.js', {
+  encoding: 'utf-8',
+});
+
+const appOutro = fs.readFileSync('src/app-outro.js', {
   encoding: 'utf-8',
 });
 
@@ -28,6 +32,7 @@ export default {
       },
       name: 'Liam',
       banner: appIntro,
+      footer: appOutro,
       sourcemap: true,
     }
   ],

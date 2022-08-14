@@ -1,6 +1,6 @@
 {
-  "name": "@liam.js/liam",
-  "version": "1.0.0",
+  "name": "@liam-js/liam",
+  "version": "1.1.0",
   "description": "A simple React library capable of using JS(ON) Schema to build web page(application).",
   "main": "src/index.js",
   "devDependencies": {
@@ -39,19 +39,23 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:chancedai/liam.git"
+    "url": "git@github.com:liam-js/liam.git"
   },
   "author": "Chang",
   "license": "ISC",
   "peerDependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-redux": "^8.0.2",
-    "redux": "^4.2.0"
+    "react": "^16.8 || ^17.0 || ^18.0",
+    "react-dom": "^16.8 || ^17.0 || ^18.0",
+    "react-redux": "^8.0.0",
+    "redux": "^4"
   },
   "keywords": [
     "json",
     "react",
     "convertor"
+  ],
+  "files": [
+    "dist",
+    "src"
   ]
 }
