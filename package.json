@@ -1,6 +1,6 @@
 {
   "name": "@liam-js/liam",
-  "version": "1.1.0",
+  "version": "1.1.2",
   "description": "A simple React library capable of using JS(ON) Schema to build web page(application).",
   "main": "src/index.js",
   "devDependencies": {

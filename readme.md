@@ -213,7 +213,7 @@
     })
   ```
 2. Liam.render 类似 ReactDom.render
-  ```javascript
+  ```javascript  
   Liam.render(schema, document.querySelector('#root'));
   ```
 3. Liam.createElement 类似 React.createElement

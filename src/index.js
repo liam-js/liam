@@ -21,6 +21,7 @@ if (window) {
       var dMap = [
         ['react', 'React'],
         ['React', 'React'],
+        ['react-dom', 'ReactDOM'],
         ['redux', 'Redux'],
         ['react-redux', 'ReactRedux'],
       ];
@@ -339,7 +340,7 @@ function isReactComponent(component) {
 
 // 函数组件，渲染属性（渲染 children） 都是一个方法，这个方法都它的 ast 信息，但转化结果却没有
 const convertResultToReactNode = function (fn, context) {
-  return function C() {
+  return function () {
     let props = arguments[0];
     let result = fn.apply(context, Array.prototype.slice.call(arguments));
     result = withAst(result, props);
@@ -859,7 +860,6 @@ const getWrappedComponent = function (
   }
 
   if (wrapType.indexOf('state') > -1) {
-    console.log(Component,'999');
     //props map目前为了触发更新； dispatch 不用 map
     Component = connect((states) => {
       let props = {};
@@ -872,7 +872,6 @@ const getWrappedComponent = function (
       });
       return props;
     })(Component);
-    console.log(Component,'aaa');
   }
 
   return Component;

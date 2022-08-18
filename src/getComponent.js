@@ -16,7 +16,7 @@ const getBuildInComponent = (function () {
       const self = this;
       const props = this.props;
 
-      liamRequire(props.deps || [], function () {
+      window.liamRequire && window.liamRequire(props.deps || [], function () {
         const args = Array.prototype.slice.call(arguments);
         if (typeof props.callback === 'function') {
           props.callback.apply(self, args);

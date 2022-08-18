@@ -14,7 +14,7 @@ import replace from 'rollup-plugin-replace';
 
 export default {
   input: 'src/index.js',
-  external: ['react', 'react-dom', 'redux', 'react-redux'],
+  external: ['react', 'redux', 'react-redux'],
   plugins: [
     alias({
       resolve: ['.js'],

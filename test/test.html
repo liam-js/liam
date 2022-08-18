@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="../dist/app.development.js"></script>
+  <script>
+    var getParam = function (key) {
+      var params = location.search.split('?')[1];
+      if (params) {
+        var arr = params.split('&');
+        for (var i = 0; i < arr.length; i++) {
+          var data = arr[i].split('=');
+          if (data[0] === key) {
+            return data[1];
+          }
+        }
+      }
+    };
+    liamRequire(['liam'],function(Liam){
+      const url = 'schemas/'+ (getParam('url')||'basic')+'.js';
+      fetch(url)
+      .then(function (response) {
+        return response.text();
+      }).then(function(text){
+        Liam.render(Liam.toJs(text), document.getElementById('root'));
+        
+      }).catch(function (err) {
+          console.log(err);
+          Liam.render([JSON.stringify(err)], document.getElementById('root'));
+      })
+      
+    });
+  </script>
+</body>
+</html>
